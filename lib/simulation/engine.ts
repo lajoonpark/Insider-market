@@ -109,7 +109,7 @@ export function initialGameState(seed = 1337): GameState {
     missions: MISSION_DEFS,
     unlockedFeatures: ["Base charts"],
     nav: "dashboard",
-    selectedCoin: "BTCX",
+    selectedCoin: "APEX",
     netWorthHistory: [{ t, value: STARTING_CASH, marketIndex: 100 }],
     majorDecisions: [],
     notifications: [],
@@ -144,16 +144,16 @@ function randomEvent(state: GameState): MarketEvent {
   }) as boolean;
 
   const sentiment =
-    rName === "influencer hype" ||
-    rName === "whale accumulation" ||
-    rName === "institutional adoption" ||
-    rName === "chain upgrade success"
+    rName === "viral influencer call" ||
+    rName === "institutional buying" ||
+    rName === "index inclusion" ||
+    rName === "earnings beat surprise"
       ? 1
       : -1;
 
   const intensity =
     (withRng(state, (s) => {
-      const rr = rngRange(s, 0.01, 0.07);
+      const rr = rngRange(s, 0.005, 0.035);
       return { rngState: rr.state, result: rr.value };
     }) as number) * sentiment;
 
@@ -181,12 +181,13 @@ function headlineFor(state: GameState, event: MarketEvent) {
   let headline = "Mixed market signals dominate trading desks";
   if (event.sentiment > 0) {
     const list =
-      event.target === "MEME" ? HEADLINE_TEMPLATES.meme : HEADLINE_TEMPLATES.marketBull;
+      event.target === "HYPE" ? HEADLINE_TEMPLATES.hype : HEADLINE_TEMPLATES.marketBull;
     headline = list[Math.floor(nextRng(state.rngState).value * list.length)];
   } else {
-    const list = event.title.includes("exploit")
-      ? HEADLINE_TEMPLATES.security
-      : HEADLINE_TEMPLATES.marketBear;
+    const list =
+      event.title.includes("breach") || event.title.includes("scandal") || event.title.includes("short seller")
+        ? HEADLINE_TEMPLATES.security
+        : HEADLINE_TEMPLATES.marketBear;
     headline = list[Math.floor(nextRng(state.rngState).value * list.length)];
   }
 
@@ -292,8 +293,8 @@ function maybeEmitInsiderTip(state: GameState) {
     hiddenReliability: reliability,
     message:
       direction === "up"
-        ? "Whispers suggest aggressive accumulation before a catalyst."
-        : "Private channels warn of coordinated unloading pressure.",
+        ? "Whispers suggest institutional buying ahead of a major announcement."
+        : "Private channels warn of large block sales before earnings.",
     confidenceHint:
       reliability > 0.7
         ? "Feels unusually specific"
@@ -405,8 +406,8 @@ function updateMissions(state: GameState) {
     /panic|hack|exploit|regulation/i.test(n.headline),
   );
 
-  const memeHeldDuringVolatility = state.news.some(
-    (n) => n.coinId === "MEME" && Math.abs(n.impact) > 0.04 && state.holdings.MEME.units > 0,
+  const hypeHeldDuringVolatility = state.news.some(
+    (n) => n.coinId === "HYPE" && Math.abs(n.impact) > 0.04 && state.holdings.HYPE.units > 0,
   );
 
   state.missions = state.missions.map((m) => {
@@ -415,7 +416,7 @@ function updateMissions(state: GameState) {
     if (m.id === "m-10x") done = netWorth >= 100_000;
     if (m.id === "m-crash") done = majorCrashSeen && netWorth > 0;
     if (m.id === "m-streak") done = profitableStreak >= 5;
-    if (m.id === "m-meme") done = memeHeldDuringVolatility;
+    if (m.id === "m-hype") done = hypeHeldDuringVolatility;
     if (m.id === "m-insider") done = insiderWins >= 3;
     if (!done) return m;
 
@@ -476,9 +477,9 @@ export function stepGameState(state: GameState, settings: GameSettings, minutes:
       const momentumPart = c.momentum * 0.4;
       const drift = cfg.trendBias + sentimentDrift + eventEffect;
 
-      const rawMove = (drift + momentumPart + noise) * difficultyBoost;
-      c.price = Math.max(0.0001, c.price * (1 + rawMove));
-      c.momentum = clamp(c.momentum * 0.8 + rawMove * 0.9, -0.15, 0.15);
+      const rawMove = clamp((drift + momentumPart + noise) * difficultyBoost, -0.05, 0.05);
+      c.price = Math.max(cfg.basePrice * 0.05, c.price * (1 + rawMove));
+      c.momentum = clamp(c.momentum * 0.8 + rawMove * 0.9, -0.08, 0.08);
       c.history.push({ t: state.currentTime, price: c.price });
 
       const spreadPct = getSpreadPct(cfg, state.fear, state.greed);
@@ -665,11 +666,15 @@ export function executeTrade(
   state.trades.unshift(trade);
   state.trades = state.trades.slice(0, 600);
 
+  const cashNote =
+    side === "sell"
+      ? ` · +${formatDollar(preview.total)} cash received`
+      : ` · -${formatDollar(preview.total)} from cash`;
   state.notifications.unshift({
     id: newId("toast", state.currentTime, state.rngState),
     t: state.currentTime,
     title: "Trade Executed",
-    message: `${side.toUpperCase()} ${coinId} ${preview.units.toFixed(4)} @ ${formatDollar(preview.estimatedPrice)}`,
+    message: `${side.toUpperCase()} ${coinId} ${preview.units.toFixed(4)} @ ${formatDollar(preview.estimatedPrice)}${cashNote}`,
     type: "trade",
   });
 

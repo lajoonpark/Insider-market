@@ -48,6 +48,7 @@ export function TradeTicket({
           <span>Spread</span>
           <span>{fmtDollar(state.buyPrice - state.sellPrice)} ({(((state.buyPrice - state.sellPrice) / state.price) * 100).toFixed(2)}%)</span>
         </div>
+        <p className="mt-2 text-xs text-zinc-500">Spread is the gap between buy and sell price. Slippage applies to large orders. Fee is 0.15%.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -94,7 +95,14 @@ export function TradeTicket({
               <div className="flex justify-between"><span>Fee</span><span>{fmtDollar(preview.fee)}</span></div>
               <div className="flex justify-between"><span>Spread cost</span><span>{fmtDollar(preview.spreadCost)}</span></div>
               <div className="flex justify-between"><span>Slippage</span><span>{(preview.slippagePct * 100).toFixed(2)}%</span></div>
-              <div className="mt-1 flex justify-between font-medium text-zinc-100"><span>Final total</span><span>{fmtDollar(preview.total)}</span></div>
+              <div className="mt-1 flex justify-between font-medium text-zinc-100">
+                <span>{side === "buy" ? "Total cost" : "Net proceeds"}</span>
+                <span>{fmtDollar(preview.total)}</span>
+              </div>
+              <div className="flex justify-between text-zinc-400">
+                <span>Cash after trade</span>
+                <span>{fmtDollar(side === "buy" ? cash - preview.total : cash + preview.total)}</span>
+              </div>
               {!preview.valid ? <p className="mt-2 text-rose-400">{preview.reason}</p> : null}
             </div>
           </>

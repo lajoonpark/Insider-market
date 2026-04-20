@@ -1,5 +1,6 @@
 "use client";
 
+import { Line, LineChart, ResponsiveContainer } from "recharts";
 import { CoinConfig, CoinState } from "@/lib/game/types";
 import { fmtDollar, fmtPct } from "@/lib/game/format";
 
@@ -14,6 +15,9 @@ export function CoinCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const sparkData = state.history.slice(-40);
+  const sparkColor = state.trend24h >= 0 ? "#10b981" : "#f43f5e";
+
   return (
     <button
       onClick={onSelect}
@@ -32,6 +36,24 @@ export function CoinCard({
           {fmtPct(state.trend24h)}
         </div>
       </div>
+
+      {sparkData.length > 2 && (
+        <div className="mb-2 h-8">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={sparkData}>
+              <Line
+                type="monotone"
+                dataKey="price"
+                stroke={sparkColor}
+                dot={false}
+                strokeWidth={1.5}
+                isAnimationActive={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div className="rounded bg-zinc-800/70 p-2 text-zinc-200">Buy: {fmtDollar(state.buyPrice)}</div>
         <div className="rounded bg-zinc-800/70 p-2 text-zinc-200">Sell: {fmtDollar(state.sellPrice)}</div>

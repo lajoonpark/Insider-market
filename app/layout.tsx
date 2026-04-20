@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Insider Market",
-  description: "Browser-based crypto investing simulator game with insider leaks and fictional market dynamics.",
+  description: "Browser-based fictional stock market simulator with insider leaks, news events, and real-time portfolio analytics.",
 };
 
 export default function RootLayout({

@@ -1,14 +1,14 @@
 import { CoinConfig, Mission, SourceType } from "@/lib/game/types";
 
 export const STARTING_CASH = 10_000;
-export const STORAGE_KEY = "insider-market-save-v1";
+export const STORAGE_KEY = "insider-market-save-v2";
 
 export const COIN_CONFIGS: CoinConfig[] = [
   {
-    id: "BTCX",
-    name: "BitCore X",
-    description: "Market leader and trend anchor with deep liquidity.",
-    basePrice: 42000,
+    id: "APEX",
+    name: "Apex Technologies",
+    description: "Market-leading tech giant, anchor of the fictional index.",
+    basePrice: 180,
     volatility: 0.003,
     trendBias: 0.00005,
     eventSensitivity: 0.8,
@@ -17,9 +17,9 @@ export const COIN_CONFIGS: CoinConfig[] = [
     riskLabel: "Low",
   },
   {
-    id: "MEME",
-    name: "MemeBurst",
-    description: "Chaotic social-driven token with giant mood swings.",
+    id: "HYPE",
+    name: "HypeMedia Inc.",
+    description: "Social-media darling with massive retail following.",
     basePrice: 4.2,
     volatility: 0.02,
     trendBias: 0.0001,
@@ -29,10 +29,10 @@ export const COIN_CONFIGS: CoinConfig[] = [
     riskLabel: "Extreme",
   },
   {
-    id: "NEXA",
-    name: "NexaChain",
-    description: "Narrative-heavy growth coin tied to product momentum.",
-    basePrice: 120,
+    id: "NOVA",
+    name: "Nova Systems",
+    description: "High-growth tech play tied to product launch momentum.",
+    basePrice: 45,
     volatility: 0.01,
     trendBias: 0.00008,
     eventSensitivity: 1.2,
@@ -41,10 +41,10 @@ export const COIN_CONFIGS: CoinConfig[] = [
     riskLabel: "High",
   },
   {
-    id: "SAFE",
-    name: "SafeHarbor",
-    description: "Defensive low-volatility coin favored in panic markets.",
-    basePrice: 60,
+    id: "VALT",
+    name: "Valt Finance",
+    description: "Defensive blue-chip favoured in turbulent markets.",
+    basePrice: 85,
     volatility: 0.002,
     trendBias: 0.00002,
     eventSensitivity: 0.4,
@@ -53,10 +53,10 @@ export const COIN_CONFIGS: CoinConfig[] = [
     riskLabel: "Low",
   },
   {
-    id: "SHDW",
-    name: "ShadowMint",
-    description: "Opaque high-risk project with rug-pull potential.",
-    basePrice: 22,
+    id: "SHAD",
+    name: "Shadow Dynamics",
+    description: "Opaque small-cap with high reward and fraud risk.",
+    basePrice: 12,
     volatility: 0.018,
     trendBias: -0.00005,
     eventSensitivity: 1.7,
@@ -66,8 +66,8 @@ export const COIN_CONFIGS: CoinConfig[] = [
   },
   {
     id: "GRID",
-    name: "GridLayer",
-    description: "Infrastructure-focused coin with slower directional moves.",
+    name: "GridWorks Corp.",
+    description: "Infrastructure stock with slower, directional moves.",
     basePrice: 240,
     volatility: 0.005,
     trendBias: 0.00004,
@@ -79,19 +79,19 @@ export const COIN_CONFIGS: CoinConfig[] = [
 ];
 
 export const SOURCE_TYPES: SourceType[] = [
-  "Anonymous source",
-  "Known whale",
-  "Developer leak",
-  "Influencer rumor",
-  "Exchange employee",
+  "Anonymous tip",
+  "Hedge fund contact",
+  "Insider leak",
+  "Influencer call",
+  "Broker intel",
 ];
 
 export const SOURCE_RELIABILITY: Record<SourceType, [number, number]> = {
-  "Anonymous source": [0.25, 0.55],
-  "Known whale": [0.4, 0.75],
-  "Developer leak": [0.5, 0.85],
-  "Influencer rumor": [0.3, 0.7],
-  "Exchange employee": [0.45, 0.8],
+  "Anonymous tip": [0.25, 0.55],
+  "Hedge fund contact": [0.4, 0.75],
+  "Insider leak": [0.5, 0.85],
+  "Influencer call": [0.3, 0.7],
+  "Broker intel": [0.45, 0.8],
 };
 
 export const MISSION_DEFS: Mission[] = [
@@ -105,7 +105,7 @@ export const MISSION_DEFS: Mission[] = [
   {
     id: "m-crash",
     title: "Crash Survivor",
-    description: "Survive a major crash without going bankrupt.",
+    description: "Survive a major market crash without going bankrupt.",
     completed: false,
     reward: "Unlock: Advanced chart overlays",
   },
@@ -117,9 +117,9 @@ export const MISSION_DEFS: Mission[] = [
     reward: "Badge: Precision Trader",
   },
   {
-    id: "m-meme",
-    title: "Diamond Hands",
-    description: "Hold MEME through an extreme volatility event.",
+    id: "m-hype",
+    title: "Ride the Wave",
+    description: "Hold HYPE shares through an extreme volatility event.",
     completed: false,
     reward: "Unlock: Faster insider feed refresh",
   },
@@ -145,36 +145,36 @@ export const NAV_ITEMS = [
 export const SPEED_OPTIONS = [0, 1, 2, 3, 5, 10, 25, 50, 100];
 
 export const EVENT_LIBRARY = [
-  "exchange hack",
-  "regulation shock",
-  "influencer hype",
-  "chain upgrade success",
-  "exploit rumor",
-  "whale accumulation",
-  "rug pull alarm",
-  "macro panic",
-  "institutional adoption",
+  "corporate data breach",
+  "SEC investigation",
+  "viral influencer call",
+  "earnings beat surprise",
+  "short seller report",
+  "institutional buying",
+  "accounting scandal",
+  "market-wide selloff",
+  "index inclusion",
 ] as const;
 
 export const HEADLINE_TEMPLATES = {
   marketBear: [
-    "Regulatory fears shake risk assets",
-    "Major exchange outage causes panic",
-    "Macro panic spreads across crypto desks",
+    "Regulatory fears shake risk assets across the board",
+    "Major broker outage triggers panic selling",
+    "Macro concerns spread across trading desks",
   ],
   marketBull: [
-    "Institutional desks rotate back into risk",
-    "Liquidity returns as markets stabilize",
-    "Risk-on mood pushes broad token rally",
+    "Institutional desks rotate back into equities",
+    "Liquidity returns as sentiment stabilises",
+    "Risk-on mood pushes broad market rally",
   ],
-  meme: [
-    "Viral meme sends small-cap token soaring",
-    "Influencer thread ignites retail frenzy",
-    "Meme traders pile into late-night pump",
+  hype: [
+    "Viral post sends HypeMedia shares soaring",
+    "Influencer thread ignites retail frenzy in HYPE",
+    "Retail traders pile into overnight HYPE rally",
   ],
   security: [
-    "Security exploit rumors spread across forums",
-    "Suspicious wallet activity sparks selloff",
-    "Auditor warning triggers fear cycle",
+    "Data breach rumours spread across analyst forums",
+    "Suspicious trading activity sparks heavy selloff",
+    "Auditor warning triggers fear cycle in small-caps",
   ],
 };
