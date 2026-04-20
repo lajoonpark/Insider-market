@@ -21,6 +21,7 @@ const DEFAULT_SETTINGS: GameSettings = {
 export function useGameEngine() {
   const [state, setState] = useState<GameState>(() => loadGameState() ?? initialGameState(7777));
   const [settings, setSettings] = useState<GameSettings>(DEFAULT_SETTINGS);
+  const { paused, timeSpeed } = state;
 
   useEffect(() => {
     if (!state) return;
@@ -28,7 +29,7 @@ export function useGameEngine() {
   }, [state]);
 
   useEffect(() => {
-    if (state.paused || state.timeSpeed === 0) return;
+    if (paused || timeSpeed === 0) return;
     const id = window.setInterval(() => {
       setState((prev) => {
         if (prev.paused || prev.timeSpeed === 0) return prev;
@@ -39,7 +40,7 @@ export function useGameEngine() {
     }, 1000);
 
     return () => window.clearInterval(id);
-  }, [state, settings]);
+  }, [paused, timeSpeed, settings]);
 
   const setNav = useCallback((nav: NavSection) => {
     setState((prev) => (prev ? { ...prev, nav } : prev));

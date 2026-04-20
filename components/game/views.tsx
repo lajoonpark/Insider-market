@@ -9,7 +9,7 @@ import { TradeTicket } from "@/components/game/TradeTicket";
 import { PerformanceChart } from "@/components/charts/PerformanceChart";
 import { PortfolioPieChart } from "@/components/charts/PortfolioPieChart";
 
-function Kpi({ label, value, tone = "neutral" }: { label: string; value: string; tone?: "good" | "bad" | "neutral" }) {
+function KpiCard({ label, value, tone = "neutral" }: { label: string; value: string; tone?: "good" | "bad" | "neutral" }) {
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
       <p className="text-xs text-zinc-400">{label}</p>
@@ -24,11 +24,11 @@ export function DashboardView({ state, derived }: { state: GameState; derived: {
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <Kpi label="Cash" value={fmtDollar(state.cash)} />
-        <Kpi label="Invested Capital" value={fmtDollar(derived.invested)} />
-        <Kpi label="Best Performer" value={derived.best} tone="good" />
-        <Kpi label="Worst Performer" value={derived.worst} tone="bad" />
-        <Kpi label="Open Positions" value={`${derived.openPositions}`} />
+        <KpiCard label="Cash" value={fmtDollar(state.cash)} />
+        <KpiCard label="Invested Capital" value={fmtDollar(derived.invested)} />
+        <KpiCard label="Best Performer" value={derived.best} tone="good" />
+        <KpiCard label="Worst Performer" value={derived.worst} tone="bad" />
+        <KpiCard label="Open Positions" value={`${derived.openPositions}`} />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
@@ -197,10 +197,10 @@ export function HistoryView({ state, netWorth }: { state: GameState; netWorth: n
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Kpi label="Best Trade" value={bestTrade ? fmtDollar(bestTrade.pnl ?? 0) : "-"} tone="good" />
-        <Kpi label="Worst Trade" value={worstTrade ? fmtDollar(worstTrade.pnl ?? 0) : "-"} tone="bad" />
-        <Kpi label="Largest Drawdown" value={fmtPct(drawdown)} tone="bad" />
-        <Kpi label="Run Summary" value={`${state.trades.length} trades`} />
+        <KpiCard label="Best Trade" value={bestTrade ? fmtDollar(bestTrade.pnl ?? 0) : "-"} tone="good" />
+        <KpiCard label="Worst Trade" value={worstTrade ? fmtDollar(worstTrade.pnl ?? 0) : "-"} tone="bad" />
+        <KpiCard label="Largest Drawdown" value={fmtPct(drawdown)} tone="bad" />
+        <KpiCard label="Run Summary" value={`${state.trades.length} trades`} />
       </div>
 
       <PerformanceChart data={state.netWorthHistory} title="Net Worth Timeline" compare />
