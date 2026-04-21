@@ -169,16 +169,16 @@ export const NAV_ITEMS = [
 export const SPEED_OPTIONS = [0, 1, 2, 3, 5, 10, 25, 50, 100];
 
 export const EVENT_LIBRARY = [
-  "earnings beat",
-  "earnings miss",
-  "guidance raise",
-  "guidance cut",
-  "merger rumor",
-  "regulatory scrutiny",
-  "analyst upgrade wave",
-  "analyst downgrade cycle",
-  "sector rotation",
-  "market-wide risk-off move",
+  { name: "earnings beat", sentiment: 1 },
+  { name: "earnings miss", sentiment: -1 },
+  { name: "guidance raise", sentiment: 1 },
+  { name: "guidance cut", sentiment: -1 },
+  { name: "merger rumor", sentiment: 1 },
+  { name: "regulatory scrutiny", sentiment: -1 },
+  { name: "analyst upgrade wave", sentiment: 1 },
+  { name: "analyst downgrade cycle", sentiment: -1 },
+  { name: "sector rotation", sentiment: 1 },
+  { name: "market-wide risk-off move", sentiment: -1 },
 ] as const;
 
 export const HEADLINE_TEMPLATES = {

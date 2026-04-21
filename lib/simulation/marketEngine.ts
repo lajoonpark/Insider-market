@@ -7,6 +7,23 @@ const MARKET_OPEN_MINUTE = 9 * 60 + 30;
 const MARKET_CLOSE_MINUTE = 16 * 60;
 const PRICE_FLOOR_MULTIPLIER = 0.15;
 const PRICE_CEILING_MULTIPLIER = 30;
+const EVENT_DECAY_LONG_THRESHOLD = 180;
+const EVENT_DECAY_MID_THRESHOLD = 60;
+const EVENT_DECAY_LONG_FACTOR = 0.55;
+const EVENT_DECAY_MID_FACTOR = 1;
+const EVENT_DECAY_LATE_FACTOR = 0.75;
+const INSIDER_PREMOVE_THRESHOLD = 0.4;
+const INSIDER_PREMOVE_FACTOR = 0.65;
+const INSIDER_REACTION_FACTOR = 1.2;
+const INSIDER_STABILIZATION_FACTOR = -0.7;
+const DAILY_USAGE_WARNING_THRESHOLD = 0.8;
+const DAILY_USAGE_WARNING_DAMP = 0.55;
+const DAILY_USAGE_CRITICAL_THRESHOLD = 1;
+const DAILY_USAGE_CRITICAL_DAMP = 0.35;
+const DAILY_USAGE_COOLDOWN_THRESHOLD = 1.25;
+const DAILY_USAGE_COOLDOWN_TICKS = 25;
+const SHORT_WINDOW_UPWARD_CORRECTION_THRESHOLD = 0.26;
+const SHORT_WINDOW_DOWNWARD_BOUNCE_THRESHOLD = -0.3;
 
 interface RegimeProfile {
   driftBias: number;
@@ -122,7 +139,12 @@ function getEventImpact(state: GameState, id: CoinId, cfg: CoinConfig) {
   let impact = 0;
   for (const ev of state.activeEvents) {
     if (ev.target !== "market" && ev.target !== id) continue;
-    const decay = ev.remainingMinutes > 180 ? 0.55 : ev.remainingMinutes > 60 ? 1 : 0.75;
+    const decay =
+      ev.remainingMinutes > EVENT_DECAY_LONG_THRESHOLD
+        ? EVENT_DECAY_LONG_FACTOR
+        : ev.remainingMinutes > EVENT_DECAY_MID_THRESHOLD
+          ? EVENT_DECAY_MID_FACTOR
+          : EVENT_DECAY_LATE_FACTOR;
     impact += ev.intensity * cfg.eventSensitivity * decay;
   }
   return clamp(impact, -cfg.maxEventMove, cfg.maxEventMove);
@@ -141,11 +163,11 @@ function getInsiderImpact(state: GameState, id: CoinId, cfg: CoinConfig) {
     const base = 0.00025 * (0.6 + tip.hiddenReliability) * cfg.insiderSensitivity;
 
     const phase =
-      age < horizon * 0.4
-        ? 0.65
+      age < horizon * INSIDER_PREMOVE_THRESHOLD
+        ? INSIDER_PREMOVE_FACTOR
         : age < horizon
-          ? 1.2
-          : -0.7;
+          ? INSIDER_REACTION_FACTOR
+          : INSIDER_STABILIZATION_FACTOR;
 
     impact += base * truthFactor * direction * phase;
   }
@@ -236,18 +258,20 @@ export function runMarketTick(state: GameState, settings: GameSettings) {
       difficultyMultiplier;
 
     const dailyUsage = Math.abs(coin.dailyMovePct) / Math.max(cfg.dailyMoveLimit, 0.0001);
-    if (dailyUsage > 0.8) move *= 0.55;
-    if (dailyUsage > 1) move *= 0.35;
-    if (dailyUsage > 1.25) coin.cooldownTicks = Math.max(coin.cooldownTicks, 25);
+    if (dailyUsage > DAILY_USAGE_WARNING_THRESHOLD) move *= DAILY_USAGE_WARNING_DAMP;
+    if (dailyUsage > DAILY_USAGE_CRITICAL_THRESHOLD) move *= DAILY_USAGE_CRITICAL_DAMP;
+    if (dailyUsage > DAILY_USAGE_COOLDOWN_THRESHOLD) {
+      coin.cooldownTicks = Math.max(coin.cooldownTicks, DAILY_USAGE_COOLDOWN_TICKS);
+    }
 
-    const historyRef = coin.history[Math.max(0, coin.history.length - 120)];
+    const historyRef = coin.history.length >= 120 ? coin.history[coin.history.length - 120] : undefined;
     if (historyRef) {
       const shortWindowMove = (coin.price - historyRef.price) / Math.max(historyRef.price, 0.0001);
-      if (shortWindowMove > 0.26 && !hasMajorPositiveCatalyst(state, cfg.id)) {
+      if (shortWindowMove > SHORT_WINDOW_UPWARD_CORRECTION_THRESHOLD && !hasMajorPositiveCatalyst(state, cfg.id)) {
         move = Math.min(move, -Math.abs(randomSignedRange(state, 0.0005, 0.0035)));
         coin.cooldownTicks = Math.max(coin.cooldownTicks, 40);
       }
-      if (shortWindowMove < -0.3 && !hasMajorNegativeCatalyst(state, cfg.id)) {
+      if (shortWindowMove < SHORT_WINDOW_DOWNWARD_BOUNCE_THRESHOLD && !hasMajorNegativeCatalyst(state, cfg.id)) {
         move = Math.max(move, Math.abs(randomSignedRange(state, 0.0004, 0.003)));
       }
     }

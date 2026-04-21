@@ -138,7 +138,7 @@ function withRng(
 }
 
 function randomEvent(state: GameState): MarketEvent {
-  const rName = withRng(state, (s) => {
+  const eventDef = withRng(state, (s) => {
     const next = nextRng(s);
     const idx = Math.floor(next.value * EVENT_LIBRARY.length);
     return { rngState: next.state, result: EVENT_LIBRARY[idx] };
@@ -149,14 +149,7 @@ function randomEvent(state: GameState): MarketEvent {
     return { rngState: next.state, result: next.value < 0.45 };
   }) as boolean;
 
-  const sentiment =
-    rName === "earnings beat" ||
-    rName === "guidance raise" ||
-    rName === "analyst upgrade wave" ||
-    rName === "sector rotation" ||
-    rName === "merger rumor"
-      ? 1
-      : -1;
+  const sentiment = eventDef.sentiment;
 
   const intensity =
     (withRng(state, (s) => {
@@ -173,10 +166,10 @@ function randomEvent(state: GameState): MarketEvent {
 
   return {
     id: newId("ev", state.currentTime, state.rngState),
-    title: rName,
+    title: eventDef.name,
     detail: targetMarket
-      ? `${rName} is impacting the entire market mood.`
-      : `${rName} is focused on ${target}.`,
+      ? `${eventDef.name} is impacting the entire market mood.`
+      : `${eventDef.name} is focused on ${target}.`,
     sentiment,
     target,
     remainingMinutes: duration,
@@ -191,10 +184,7 @@ function headlineFor(state: GameState, event: MarketEvent) {
       event.target === "HYPE" ? HEADLINE_TEMPLATES.hype : HEADLINE_TEMPLATES.marketBull;
     headline = list[Math.floor(nextRng(state.rngState).value * list.length)];
   } else {
-    const list =
-      event.title.includes("regulatory") || event.title.includes("downgrade") || event.title.includes("miss")
-        ? HEADLINE_TEMPLATES.security
-        : HEADLINE_TEMPLATES.marketBear;
+    const list = event.target === "market" ? HEADLINE_TEMPLATES.marketBear : HEADLINE_TEMPLATES.security;
     headline = list[Math.floor(nextRng(state.rngState).value * list.length)];
   }
 
