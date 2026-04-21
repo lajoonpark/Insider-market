@@ -31,6 +31,17 @@ function downsample<T>(arr: T[], maxPoints: number): T[] {
 const MINUTES_IN_1H = 60;
 const MINUTES_IN_6H = 360;
 const MINUTES_IN_24H = 1440;
+const ZOOM_MINUTES: Record<"1H" | "6H" | "24H", number> = {
+  "1H": MINUTES_IN_1H,
+  "6H": MINUTES_IN_6H,
+  "24H": MINUTES_IN_24H,
+};
+
+function zoomButtonClass(active: boolean) {
+  return `rounded px-2 py-0.5 text-xs transition ${
+    active ? "bg-indigo-500/20 text-indigo-300" : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+  }`;
+}
 
 export function PerformanceChart({
   data,
@@ -47,8 +58,7 @@ export function PerformanceChart({
   const effectiveMode = compare ? "pct" : mode;
   const zoomedData = useMemo(() => {
     if (zoom === "ALL") return data;
-    const points = zoom === "1H" ? MINUTES_IN_1H : zoom === "6H" ? MINUTES_IN_6H : MINUTES_IN_24H;
-    return data.slice(-points);
+    return data.slice(-ZOOM_MINUTES[zoom]);
   }, [data, zoom]);
 
   const sampled = useMemo(() => {
@@ -110,7 +120,7 @@ export function PerformanceChart({
               <button
                 key={range}
                 onClick={() => setZoom(range)}
-                className={`rounded px-2 py-0.5 text-xs transition ${zoom === range ? "bg-indigo-500/20 text-indigo-300" : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"}`}
+                className={zoomButtonClass(zoom === range)}
               >
                 {range}
               </button>
