@@ -28,6 +28,21 @@ function downsample<T>(arr: T[], maxPoints: number): T[] {
   return arr.filter((_, i) => i % step === 0 || i === arr.length - 1);
 }
 
+const MINUTES_IN_1H = 60;
+const MINUTES_IN_6H = 360;
+const MINUTES_IN_24H = 1440;
+const ZOOM_MINUTES: Record<"1H" | "6H" | "24H", number> = {
+  "1H": MINUTES_IN_1H,
+  "6H": MINUTES_IN_6H,
+  "24H": MINUTES_IN_24H,
+};
+
+function zoomButtonClass(active: boolean) {
+  return `rounded px-2 py-0.5 text-xs transition ${
+    active ? "bg-indigo-500/20 text-indigo-300" : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+  }`;
+}
+
 export function PerformanceChart({
   data,
   title,
@@ -38,13 +53,18 @@ export function PerformanceChart({
   compare?: boolean;
 }) {
   const [mode, setMode] = useState<"value" | "pct">("value");
+  const [zoom, setZoom] = useState<"1H" | "6H" | "24H" | "ALL">("ALL");
   // compare mode always uses % so both series share the same scale
   const effectiveMode = compare ? "pct" : mode;
+  const zoomedData = useMemo(() => {
+    if (zoom === "ALL") return data;
+    return data.slice(-ZOOM_MINUTES[zoom]);
+  }, [data, zoom]);
 
   const sampled = useMemo(() => {
-    const startValue = data[0]?.value ?? 1;
-    const startIndex = data[0]?.marketIndex ?? 100;
-    const rows = data.map((d) => ({
+    const startValue = zoomedData[0]?.value ?? 1;
+    const startIndex = zoomedData[0]?.marketIndex ?? 100;
+    const rows = zoomedData.map((d) => ({
       time: new Date(d.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       portfolio:
         effectiveMode === "value"
@@ -58,7 +78,7 @@ export function PerformanceChart({
           : undefined,
     }));
     return downsample(rows, 300);
-  }, [data, effectiveMode]);
+  }, [zoomedData, effectiveMode]);
 
   const yFormatter = effectiveMode === "value" ? fmtYAxis : fmtYAxisPct;
 
@@ -95,6 +115,17 @@ export function PerformanceChart({
               </button>
             </div>
           )}
+          <div className="flex gap-1">
+            {(["1H", "6H", "24H", "ALL"] as const).map((range) => (
+              <button
+                key={range}
+                onClick={() => setZoom(range)}
+                className={zoomButtonClass(zoom === range)}
+              >
+                {range}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
       <div className="h-56">

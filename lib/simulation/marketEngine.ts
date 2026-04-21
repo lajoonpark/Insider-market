@@ -3,8 +3,6 @@ import { CoinConfig, CoinId, GameSettings, GameState, MarketRegime } from "@/lib
 import { nextRng, rngRange } from "@/lib/simulation/random";
 
 const ONE_MINUTE = 60_000;
-const MARKET_OPEN_MINUTE = 9 * 60 + 30;
-const MARKET_CLOSE_MINUTE = 16 * 60;
 const PRICE_FLOOR_MULTIPLIER = 0.15;
 const PRICE_CEILING_MULTIPLIER = 30;
 const EVENT_DECAY_LONG_THRESHOLD = 180;
@@ -67,14 +65,6 @@ function randomSignedRange(state: GameState, min: number, max: number) {
 
 function regimeProfile(state: GameState) {
   return REGIME_PROFILES[state.marketRegime];
-}
-
-export function isMarketOpen(currentTime: number) {
-  const dt = new Date(currentTime);
-  const day = dt.getUTCDay();
-  if (day === 0 || day === 6) return false;
-  const minute = dt.getUTCHours() * 60 + dt.getUTCMinutes();
-  return minute >= MARKET_OPEN_MINUTE && minute < MARKET_CLOSE_MINUTE;
 }
 
 function pickRegime(state: GameState): MarketRegime {
@@ -173,21 +163,6 @@ function getInsiderImpact(state: GameState, id: CoinId, cfg: CoinConfig) {
   return clamp(impact, -cfg.maxEventMove * 0.6, cfg.maxEventMove * 0.6);
 }
 
-function applyOpenGap(state: GameState, cfg: CoinConfig) {
-  const coin = state.coins[cfg.id];
-  const baselineGap = randomSignedRange(state, 0.0004, 0.0065);
-  const eventGap = getEventImpact(state, cfg.id, cfg) * 3.2;
-  const gap = clamp(baselineGap + eventGap, -0.05, 0.05);
-
-  coin.price = clamp(
-    coin.price * (1 + gap),
-    cfg.basePrice * PRICE_FLOOR_MULTIPLIER,
-    cfg.basePrice * PRICE_CEILING_MULTIPLIER,
-  );
-  coin.intradayOpenPrice = coin.price;
-  coin.dailyMovePct = 0;
-}
-
 function hasMajorPositiveCatalyst(state: GameState, id: CoinId) {
   return state.activeEvents.some(
     (ev) =>
@@ -209,20 +184,11 @@ function hasMajorNegativeCatalyst(state: GameState, id: CoinId) {
 export function runMarketTick(state: GameState, settings: GameSettings) {
   updateMarketRegime(state);
   const profile = regimeProfile(state);
-  const nowOpen = isMarketOpen(state.currentTime);
-  const prevOpen = isMarketOpen(state.currentTime - ONE_MINUTE);
-  const justOpened = nowOpen && !prevOpen;
-
-  if (!nowOpen) {
-    state.marketSentiment = clamp(state.marketSentiment * 0.996, -1, 1);
-    return { marketOpen: false, moodNudge: 0 };
-  }
 
   let moodNudge = 0;
 
   for (const cfg of COIN_CONFIGS) {
     const coin = state.coins[cfg.id];
-    if (justOpened) applyOpenGap(state, cfg);
 
     const eventImpact = getEventImpact(state, cfg.id, cfg);
     const insiderImpact = getInsiderImpact(state, cfg.id, cfg);
