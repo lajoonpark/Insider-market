@@ -3,6 +3,11 @@
 import { CoinConfig, Holding, CoinState } from "@/lib/game/types";
 import { fmtDollar, fmtPct } from "@/lib/game/format";
 
+function fmtRealizedPnL(value: number): string {
+  if (value === 0) return "—";
+  return `${value >= 0 ? "+" : ""}${fmtDollar(value)}`;
+}
+
 export function HoldingsTable({
   coins,
   holdings,
@@ -19,11 +24,12 @@ export function HoldingsTable({
         <table className="w-full text-sm">
           <thead className="text-zinc-400">
             <tr>
-              <th className="px-2 py-2 text-left">Coin</th>
-              <th className="px-2 py-2 text-right">Units</th>
+              <th className="px-2 py-2 text-left">Stock</th>
+              <th className="px-2 py-2 text-right">Shares</th>
               <th className="px-2 py-2 text-right">Avg Cost</th>
               <th className="px-2 py-2 text-right">Current Value</th>
               <th className="px-2 py-2 text-right">P/L %</th>
+              <th className="px-2 py-2 text-right">Realized P/L</th>
             </tr>
           </thead>
           <tbody>
@@ -40,6 +46,9 @@ export function HoldingsTable({
                   <td className="px-2 py-2 text-right text-zinc-300">{fmtDollar(value)}</td>
                   <td className={`px-2 py-2 text-right ${pnlPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                     {fmtPct(pnlPct)}
+                  </td>
+                  <td className={`px-2 py-2 text-right ${h.realizedPnL >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                    {fmtRealizedPnL(h.realizedPnL)}
                   </td>
                 </tr>
               );

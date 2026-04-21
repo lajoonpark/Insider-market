@@ -23,20 +23,25 @@ export function DashboardView({ state, derived }: { state: GameState; derived: {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <KpiCard label="Cash" value={fmtDollar(state.cash)} />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <KpiCard label="Cash (available to trade)" value={fmtDollar(state.cash)} />
+        <KpiCard label="Net Worth" value={fmtDollar(derived.netWorth)} />
+        <KpiCard
+          label="Unrealized P/L"
+          value={`${derived.unrealizedPnL >= 0 ? "+" : ""}${fmtDollar(Math.abs(derived.unrealizedPnL))}`}
+          tone={derived.unrealizedPnL >= 0 ? "good" : "bad"}
+        />
         <KpiCard label="Invested Capital" value={fmtDollar(derived.invested)} />
         <KpiCard label="Best Performer" value={derived.best} tone="good" />
         <KpiCard label="Worst Performer" value={derived.worst} tone="bad" />
-        <KpiCard label="Open Positions" value={`${derived.openPositions}`} />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
         <PortfolioPieChart data={pie.length ? pie : [{ name: "Cash", value: state.cash }]} />
-        <PerformanceChart data={state.netWorthHistory} title="Portfolio Performance" />
+        <PerformanceChart data={state.netWorthHistory} title="Portfolio Value (USD)" />
       </div>
 
-      <PerformanceChart data={state.netWorthHistory} title="Compare vs Market" compare />
+      <PerformanceChart data={state.netWorthHistory} title="Portfolio vs Market Index (% from start)" compare />
       <HoldingsTable coins={COIN_CONFIGS} holdings={state.holdings} coinStates={state.coins} />
     </div>
   );
@@ -72,7 +77,7 @@ export function MarketView({
           ))}
         </div>
 
-        <PerformanceChart data={coinSeries} title={`${selected.id} Price Chart`} />
+        <PerformanceChart data={coinSeries} title={`${selected.name} (${selected.id}) Share Price`} />
 
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
           <h3 className="mb-3 text-sm font-medium text-zinc-200">Recent Related News</h3>
@@ -203,7 +208,7 @@ export function HistoryView({ state, netWorth }: { state: GameState; netWorth: n
         <KpiCard label="Run Summary" value={`${state.trades.length} trades`} />
       </div>
 
-      <PerformanceChart data={state.netWorthHistory} title="Net Worth Timeline" compare />
+      <PerformanceChart data={state.netWorthHistory} title="Net Worth vs Market (% from start)" compare />
 
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
         <h3 className="mb-3 text-sm font-medium text-zinc-200">Trade History</h3>

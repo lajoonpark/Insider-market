@@ -7,14 +7,14 @@ export type NavSection =
   | "history"
   | "settings";
 
-export type CoinId = "BTCX" | "MEME" | "NEXA" | "SAFE" | "SHDW" | "GRID";
+export type CoinId = "APEX" | "HYPE" | "NOVA" | "VALT" | "SHAD" | "GRID";
 
 export type SourceType =
-  | "Anonymous source"
-  | "Known whale"
-  | "Developer leak"
-  | "Influencer rumor"
-  | "Exchange employee";
+  | "Anonymous tip"
+  | "Hedge fund contact"
+  | "Insider leak"
+  | "Influencer call"
+  | "Broker intel";
 
 export interface CoinConfig {
   id: CoinId;
