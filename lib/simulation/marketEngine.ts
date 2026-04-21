@@ -67,8 +67,7 @@ function regimeProfile(state: GameState) {
   return REGIME_PROFILES[state.marketRegime];
 }
 
-export function isMarketOpen(currentTime: number) {
-  void currentTime;
+export function isMarketOpen() {
   return true;
 }
 
@@ -204,8 +203,8 @@ function hasMajorNegativeCatalyst(state: GameState, id: CoinId) {
 export function runMarketTick(state: GameState, settings: GameSettings) {
   updateMarketRegime(state);
   const profile = regimeProfile(state);
-  const nowOpen = isMarketOpen(state.currentTime);
-  const prevOpen = isMarketOpen(state.currentTime - ONE_MINUTE);
+  const nowOpen = isMarketOpen();
+  const prevOpen = isMarketOpen();
   const justOpened = nowOpen && !prevOpen;
 
   if (!nowOpen) {

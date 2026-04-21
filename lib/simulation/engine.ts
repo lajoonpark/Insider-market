@@ -488,7 +488,7 @@ export function createTradePreview(
   side: "buy" | "sell",
   orderUsd: number,
 ): TradePreview {
-  if (!isMarketOpen(state.currentTime)) {
+  if (!isMarketOpen()) {
     return {
       side,
       coinId,
