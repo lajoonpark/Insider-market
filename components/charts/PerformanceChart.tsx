@@ -38,13 +38,19 @@ export function PerformanceChart({
   compare?: boolean;
 }) {
   const [mode, setMode] = useState<"value" | "pct">("value");
+  const [zoom, setZoom] = useState<"1H" | "6H" | "24H" | "ALL">("ALL");
   // compare mode always uses % so both series share the same scale
   const effectiveMode = compare ? "pct" : mode;
+  const zoomedData = useMemo(() => {
+    if (zoom === "ALL") return data;
+    const points = zoom === "1H" ? 60 : zoom === "6H" ? 360 : 1440;
+    return data.slice(-points);
+  }, [data, zoom]);
 
   const sampled = useMemo(() => {
-    const startValue = data[0]?.value ?? 1;
-    const startIndex = data[0]?.marketIndex ?? 100;
-    const rows = data.map((d) => ({
+    const startValue = zoomedData[0]?.value ?? 1;
+    const startIndex = zoomedData[0]?.marketIndex ?? 100;
+    const rows = zoomedData.map((d) => ({
       time: new Date(d.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       portfolio:
         effectiveMode === "value"
@@ -58,7 +64,7 @@ export function PerformanceChart({
           : undefined,
     }));
     return downsample(rows, 300);
-  }, [data, effectiveMode]);
+  }, [zoomedData, effectiveMode]);
 
   const yFormatter = effectiveMode === "value" ? fmtYAxis : fmtYAxisPct;
 
@@ -95,6 +101,17 @@ export function PerformanceChart({
               </button>
             </div>
           )}
+          <div className="flex gap-1">
+            {(["1H", "6H", "24H", "ALL"] as const).map((range) => (
+              <button
+                key={range}
+                onClick={() => setZoom(range)}
+                className={`rounded px-2 py-0.5 text-xs transition ${zoom === range ? "bg-indigo-500/20 text-indigo-300" : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"}`}
+              >
+                {range}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
       <div className="h-56">
