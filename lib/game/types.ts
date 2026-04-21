@@ -115,6 +115,11 @@ export interface MarketEvent {
   intensity: number;
 }
 
+export interface MarketEventDefinition {
+  name: string;
+  sentiment: -1 | 1;
+}
+
 export interface NotificationToast {
   id: string;
   t: number;

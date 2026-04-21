@@ -139,12 +139,12 @@ function getEventImpact(state: GameState, id: CoinId, cfg: CoinConfig) {
   let impact = 0;
   for (const ev of state.activeEvents) {
     if (ev.target !== "market" && ev.target !== id) continue;
-    const decay =
-      ev.remainingMinutes > EVENT_DECAY_LONG_THRESHOLD
-        ? EVENT_DECAY_LONG_FACTOR
-        : ev.remainingMinutes > EVENT_DECAY_MID_THRESHOLD
-          ? EVENT_DECAY_MID_FACTOR
-          : EVENT_DECAY_LATE_FACTOR;
+    let decay = EVENT_DECAY_LATE_FACTOR;
+    if (ev.remainingMinutes > EVENT_DECAY_LONG_THRESHOLD) {
+      decay = EVENT_DECAY_LONG_FACTOR;
+    } else if (ev.remainingMinutes > EVENT_DECAY_MID_THRESHOLD) {
+      decay = EVENT_DECAY_MID_FACTOR;
+    }
     impact += ev.intensity * cfg.eventSensitivity * decay;
   }
   return clamp(impact, -cfg.maxEventMove, cfg.maxEventMove);
@@ -158,16 +158,15 @@ function getInsiderImpact(state: GameState, id: CoinId, cfg: CoinConfig) {
     const horizon = tip.expectedReactionMinutes;
     if (age > horizon * 1.6) continue;
 
-    const truthFactor = tip.truthType === "true" ? 1 : tip.truthType === "partial" ? 0.55 : -0.6;
+    let truthFactor = -0.6;
+    if (tip.truthType === "true") truthFactor = 1;
+    else if (tip.truthType === "partial") truthFactor = 0.55;
     const direction = tip.expectedDirection === "up" ? 1 : -1;
     const base = 0.00025 * (0.6 + tip.hiddenReliability) * cfg.insiderSensitivity;
 
-    const phase =
-      age < horizon * INSIDER_PREMOVE_THRESHOLD
-        ? INSIDER_PREMOVE_FACTOR
-        : age < horizon
-          ? INSIDER_REACTION_FACTOR
-          : INSIDER_STABILIZATION_FACTOR;
+    let phase = INSIDER_STABILIZATION_FACTOR;
+    if (age < horizon * INSIDER_PREMOVE_THRESHOLD) phase = INSIDER_PREMOVE_FACTOR;
+    else if (age < horizon) phase = INSIDER_REACTION_FACTOR;
 
     impact += base * truthFactor * direction * phase;
   }

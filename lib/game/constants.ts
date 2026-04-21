@@ -1,4 +1,4 @@
-import { CoinConfig, Mission, SourceType } from "@/lib/game/types";
+import { CoinConfig, MarketEventDefinition, Mission, SourceType } from "@/lib/game/types";
 
 export const STARTING_CASH = 10_000;
 export const STORAGE_KEY = "insider-market-save-v2";
@@ -168,7 +168,7 @@ export const NAV_ITEMS = [
 
 export const SPEED_OPTIONS = [0, 1, 2, 3, 5, 10, 25, 50, 100];
 
-export const EVENT_LIBRARY = [
+export const EVENT_LIBRARY: readonly MarketEventDefinition[] = [
   { name: "earnings beat", sentiment: 1 },
   { name: "earnings miss", sentiment: -1 },
   { name: "guidance raise", sentiment: 1 },
