@@ -67,10 +67,6 @@ function regimeProfile(state: GameState) {
   return REGIME_PROFILES[state.marketRegime];
 }
 
-export function isMarketOpen() {
-  return true;
-}
-
 function pickRegime(state: GameState): MarketRegime {
   const sentiment = state.marketSentiment;
   const r = random01(state);
@@ -167,21 +163,6 @@ function getInsiderImpact(state: GameState, id: CoinId, cfg: CoinConfig) {
   return clamp(impact, -cfg.maxEventMove * 0.6, cfg.maxEventMove * 0.6);
 }
 
-function applyOpenGap(state: GameState, cfg: CoinConfig) {
-  const coin = state.coins[cfg.id];
-  const baselineGap = randomSignedRange(state, 0.0004, 0.0065);
-  const eventGap = getEventImpact(state, cfg.id, cfg) * 3.2;
-  const gap = clamp(baselineGap + eventGap, -0.05, 0.05);
-
-  coin.price = clamp(
-    coin.price * (1 + gap),
-    cfg.basePrice * PRICE_FLOOR_MULTIPLIER,
-    cfg.basePrice * PRICE_CEILING_MULTIPLIER,
-  );
-  coin.intradayOpenPrice = coin.price;
-  coin.dailyMovePct = 0;
-}
-
 function hasMajorPositiveCatalyst(state: GameState, id: CoinId) {
   return state.activeEvents.some(
     (ev) =>
@@ -203,20 +184,11 @@ function hasMajorNegativeCatalyst(state: GameState, id: CoinId) {
 export function runMarketTick(state: GameState, settings: GameSettings) {
   updateMarketRegime(state);
   const profile = regimeProfile(state);
-  const nowOpen = isMarketOpen();
-  const prevOpen = isMarketOpen();
-  const justOpened = nowOpen && !prevOpen;
-
-  if (!nowOpen) {
-    state.marketSentiment = clamp(state.marketSentiment * 0.996, -1, 1);
-    return { marketOpen: false, moodNudge: 0 };
-  }
 
   let moodNudge = 0;
 
   for (const cfg of COIN_CONFIGS) {
     const coin = state.coins[cfg.id];
-    if (justOpened) applyOpenGap(state, cfg);
 
     const eventImpact = getEventImpact(state, cfg.id, cfg);
     const insiderImpact = getInsiderImpact(state, cfg.id, cfg);

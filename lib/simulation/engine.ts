@@ -18,7 +18,7 @@ import {
   TradePreview,
 } from "@/lib/game/types";
 import { nextRng, rngRange } from "@/lib/simulation/random";
-import { getEventSpawnProbability, isMarketOpen, runMarketTick } from "@/lib/simulation/marketEngine";
+import { getEventSpawnProbability, runMarketTick } from "@/lib/simulation/marketEngine";
 
 const ONE_MINUTE = 60_000;
 
@@ -488,22 +488,6 @@ export function createTradePreview(
   side: "buy" | "sell",
   orderUsd: number,
 ): TradePreview {
-  if (!isMarketOpen()) {
-    return {
-      side,
-      coinId,
-      orderUsd,
-      units: 0,
-      estimatedPrice: state.coins[coinId].price,
-      fee: 0,
-      spreadCost: 0,
-      slippagePct: 0,
-      total: orderUsd,
-      valid: false,
-      reason: "Market is closed. Orders resume at next session open.",
-    };
-  }
-
   const coin = state.coins[coinId];
   const cfg = coinConfig(coinId);
   const px = side === "buy" ? coin.buyPrice : coin.sellPrice;
