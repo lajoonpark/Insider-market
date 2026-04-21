@@ -22,7 +22,7 @@ All game logic runs client-side with deterministic seeded simulation and localSt
 - Six fictional stocks with distinct personalities:
   - APEX, HYPE, NOVA, VALT, SHAD, GRID
 - Continuous market simulation engine with:
-  - trading sessions (open/close)
+  - always-open trading
   - market regimes (Calm/Bullish/Bearish/Volatile/Panic)
   - trend bias
   - momentum

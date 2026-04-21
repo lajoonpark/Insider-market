@@ -3,8 +3,6 @@ import { CoinConfig, CoinId, GameSettings, GameState, MarketRegime } from "@/lib
 import { nextRng, rngRange } from "@/lib/simulation/random";
 
 const ONE_MINUTE = 60_000;
-const MARKET_OPEN_MINUTE = 9 * 60 + 30;
-const MARKET_CLOSE_MINUTE = 16 * 60;
 const PRICE_FLOOR_MULTIPLIER = 0.15;
 const PRICE_CEILING_MULTIPLIER = 30;
 const EVENT_DECAY_LONG_THRESHOLD = 180;
@@ -70,11 +68,8 @@ function regimeProfile(state: GameState) {
 }
 
 export function isMarketOpen(currentTime: number) {
-  const dt = new Date(currentTime);
-  const day = dt.getUTCDay();
-  if (day === 0 || day === 6) return false;
-  const minute = dt.getUTCHours() * 60 + dt.getUTCMinutes();
-  return minute >= MARKET_OPEN_MINUTE && minute < MARKET_CLOSE_MINUTE;
+  void currentTime;
+  return true;
 }
 
 function pickRegime(state: GameState): MarketRegime {
