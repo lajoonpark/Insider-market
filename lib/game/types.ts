@@ -8,6 +8,8 @@ export type NavSection =
   | "settings";
 
 export type CoinId = "APEX" | "HYPE" | "NOVA" | "VALT" | "SHAD" | "GRID";
+export type StockCategory = "Blue-chip" | "Growth" | "Small-cap" | "Speculative" | "Dividend";
+export type MarketRegime = "Calm" | "Bullish" | "Bearish" | "Volatile" | "Panic";
 
 export type SourceType =
   | "Anonymous tip"
@@ -20,8 +22,12 @@ export interface CoinConfig {
   id: CoinId;
   name: string;
   description: string;
+  category: StockCategory;
   basePrice: number;
   volatility: number;
+  maxMovePerTick: number;
+  maxEventMove: number;
+  dailyMoveLimit: number;
   trendBias: number;
   eventSensitivity: number;
   insiderSensitivity: number;
@@ -36,6 +42,9 @@ export interface CoinState {
   sellPrice: number;
   momentum: number;
   trend24h: number;
+  intradayOpenPrice: number;
+  dailyMovePct: number;
+  cooldownTicks: number;
   history: Array<{ t: number; price: number }>;
   volatilityLabel: "Low" | "Medium" | "High" | "Extreme";
   latestNewsIds: string[];
@@ -81,6 +90,7 @@ export interface InsiderTip {
   confidenceHint: string;
   sourceType: SourceType;
   expectedReactionMinutes: number;
+  expectedDirection: "up" | "down";
   hiddenReliability: number;
   truthType: "true" | "false" | "partial";
   resolved: boolean;
@@ -103,6 +113,11 @@ export interface MarketEvent {
   target: "market" | CoinId;
   remainingMinutes: number;
   intensity: number;
+}
+
+export interface MarketEventDefinition {
+  name: string;
+  sentiment: -1 | 1;
 }
 
 export interface NotificationToast {
@@ -137,6 +152,8 @@ export interface GameState {
   fear: number;
   greed: number;
   marketSentiment: number;
+  marketRegime: MarketRegime;
+  regimeMinutesRemaining: number;
   activeEvents: MarketEvent[];
   coins: Record<CoinId, CoinState>;
   holdings: Record<CoinId, Holding>;

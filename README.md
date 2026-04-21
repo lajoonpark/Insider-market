@@ -1,6 +1,6 @@
 # Insider Market
 
-Insider Market is a polished browser-based crypto investing simulator game (fictional market, no real APIs) built with **Next.js + TypeScript + Tailwind CSS + Recharts**.
+Insider Market is a polished browser-based stock investing simulator game (fictional market, no real APIs) built with **Next.js + TypeScript + Tailwind CSS + Recharts**.
 
 ## Project overview
 
@@ -19,9 +19,11 @@ All game logic runs client-side with deterministic seeded simulation and localSt
 - Modern dark trading-dashboard UI
 - Desktop-first responsive layout with top bar + sidebar navigation
 - Time acceleration controls: Pause, 1x, 2x, 3x, 5x, 10x, 25x, 50x, 100x
-- Six fictional coins with distinct personalities:
-  - BTCX, MEME, NEXA, SAFE, SHDW, GRID
+- Six fictional stocks with distinct personalities:
+  - APEX, HYPE, NOVA, VALT, SHAD, GRID
 - Continuous market simulation engine with:
+  - trading sessions (open/close)
+  - market regimes (Calm/Bullish/Bearish/Volatile/Panic)
   - trend bias
   - momentum
   - volatility
@@ -71,6 +73,7 @@ lib/
     types.ts
   simulation/
     engine.ts
+    marketEngine.ts
     random.ts
   storage/
     localStorage.ts

@@ -18,6 +18,7 @@ import {
   TradePreview,
 } from "@/lib/game/types";
 import { nextRng, rngRange } from "@/lib/simulation/random";
+import { getEventSpawnProbability, isMarketOpen, runMarketTick } from "@/lib/simulation/marketEngine";
 
 const ONE_MINUTE = 60_000;
 
@@ -58,6 +59,9 @@ function createCoinState(cfg: CoinConfig, t: number): CoinState {
     sellPrice: cfg.basePrice * 0.999,
     momentum: 0,
     trend24h: 0,
+    intradayOpenPrice: cfg.basePrice,
+    dailyMovePct: 0,
+    cooldownTicks: 0,
     history: [{ t, price: cfg.basePrice }],
     volatilityLabel: volatilityLabel(cfg.volatility),
     latestNewsIds: [],
@@ -99,6 +103,8 @@ export function initialGameState(seed = 1337): GameState {
     fear: 25,
     greed: 25,
     marketSentiment: 0,
+    marketRegime: "Calm",
+    regimeMinutesRemaining: 180,
     activeEvents: [],
     coins,
     holdings,
@@ -132,7 +138,7 @@ function withRng(
 }
 
 function randomEvent(state: GameState): MarketEvent {
-  const rName = withRng(state, (s) => {
+  const eventDef = withRng(state, (s) => {
     const next = nextRng(s);
     const idx = Math.floor(next.value * EVENT_LIBRARY.length);
     return { rngState: next.state, result: EVENT_LIBRARY[idx] };
@@ -143,22 +149,16 @@ function randomEvent(state: GameState): MarketEvent {
     return { rngState: next.state, result: next.value < 0.45 };
   }) as boolean;
 
-  const sentiment =
-    rName === "viral influencer call" ||
-    rName === "institutional buying" ||
-    rName === "index inclusion" ||
-    rName === "earnings beat surprise"
-      ? 1
-      : -1;
+  const sentiment = eventDef.sentiment;
 
   const intensity =
     (withRng(state, (s) => {
-      const rr = rngRange(s, 0.005, 0.035);
+      const rr = rngRange(s, 0.00045, 0.0032);
       return { rngState: rr.state, result: rr.value };
     }) as number) * sentiment;
 
   const duration = withRng(state, (s) => {
-    const rr = rngRange(s, 30, 240);
+    const rr = rngRange(s, 60, 360);
     return { rngState: rr.state, result: Math.floor(rr.value) };
   }) as number;
 
@@ -166,10 +166,10 @@ function randomEvent(state: GameState): MarketEvent {
 
   return {
     id: newId("ev", state.currentTime, state.rngState),
-    title: rName,
+    title: eventDef.name,
     detail: targetMarket
-      ? `${rName} is impacting the entire market mood.`
-      : `${rName} is focused on ${target}.`,
+      ? `${eventDef.name} is impacting the entire market mood.`
+      : `${eventDef.name} is focused on ${target}.`,
     sentiment,
     target,
     remainingMinutes: duration,
@@ -184,10 +184,7 @@ function headlineFor(state: GameState, event: MarketEvent) {
       event.target === "HYPE" ? HEADLINE_TEMPLATES.hype : HEADLINE_TEMPLATES.marketBull;
     headline = list[Math.floor(nextRng(state.rngState).value * list.length)];
   } else {
-    const list =
-      event.title.includes("breach") || event.title.includes("scandal") || event.title.includes("short seller")
-        ? HEADLINE_TEMPLATES.security
-        : HEADLINE_TEMPLATES.marketBear;
+    const list = event.target === "market" ? HEADLINE_TEMPLATES.marketBear : HEADLINE_TEMPLATES.security;
     headline = list[Math.floor(nextRng(state.rngState).value * list.length)];
   }
 
@@ -205,7 +202,7 @@ function maybeEmitEvent(state: GameState) {
     const next = nextRng(s);
     return { rngState: next.state, result: next.value };
   }) as number;
-  if (roll > 0.018) return;
+  if (roll > getEventSpawnProbability(state)) return;
 
   const event = randomEvent(state);
   state.activeEvents.unshift(event);
@@ -239,7 +236,13 @@ function maybeEmitInsiderTip(state: GameState) {
     const next = nextRng(s);
     return { rngState: next.state, result: next.value };
   }) as number;
-  if (roll > 0.01) return;
+  const tipProb =
+    state.marketRegime === "Panic"
+      ? 0.0035
+      : state.marketRegime === "Volatile"
+        ? 0.003
+        : 0.0024;
+  if (roll > tipProb) return;
 
   const sourceType = SOURCE_TYPES[
     Math.floor(
@@ -274,7 +277,7 @@ function maybeEmitInsiderTip(state: GameState) {
     return { rngState: rr.state, result: Math.floor(rr.value) };
   }) as number;
 
-  const direction =
+  const direction = (
     truthType === "false"
       ? withRng(state, (s) => {
           const next = nextRng(s);
@@ -283,7 +286,8 @@ function maybeEmitInsiderTip(state: GameState) {
       : withRng(state, (s) => {
           const next = nextRng(s);
           return { rngState: next.state, result: next.value > 0.35 ? "up" : "down" };
-        });
+        })
+  ) as "up" | "down";
 
   const tip: InsiderTip = {
     id: newId("tip", state.currentTime, state.rngState),
@@ -302,6 +306,7 @@ function maybeEmitInsiderTip(state: GameState) {
           ? "Some corroboration, still noisy"
           : "Thin signal, mostly rumors",
     expectedReactionMinutes: eta,
+    expectedDirection: direction,
     truthType,
     resolved: false,
   };
@@ -334,7 +339,7 @@ function resolveTips(state: GameState) {
     const end = horizon[horizon.length - 1].price;
     const ret = (end - start) / start;
 
-    const expectedDirection = tip.message.includes("accumulation") ? 1 : -1;
+    const expectedDirection = tip.expectedDirection === "up" ? 1 : -1;
     let accurate = false;
     if (tip.truthType === "true") accurate = ret * expectedDirection > 0.01;
     if (tip.truthType === "partial") accurate = ret * expectedDirection > 0;
@@ -347,17 +352,6 @@ function resolveTips(state: GameState) {
     stats.resolvedTips += 1;
     if (accurate) stats.accurateTips += 1;
   });
-}
-
-function applyEventEffects(state: GameState, id: CoinId) {
-  let effect = 0;
-  const cfg = coinConfig(id);
-  for (const ev of state.activeEvents) {
-    if (ev.target === "market" || ev.target === id) {
-      effect += ev.intensity * cfg.eventSensitivity;
-    }
-  }
-  return effect;
 }
 
 function calcMarketIndex(state: GameState) {
@@ -457,42 +451,22 @@ export function stepGameState(state: GameState, settings: GameSettings, minutes:
     });
     state.activeEvents = state.activeEvents.filter((ev) => ev.remainingMinutes > 0);
 
-    let moodNudge = 0;
+    const { marketOpen, moodNudge } = runMarketTick(state, settings);
     for (const cfg of COIN_CONFIGS) {
       const c = state.coins[cfg.id];
-      const noise = withRng(state, (s) => {
-        const rr = rngRange(s, -cfg.volatility, cfg.volatility);
-        return { rngState: rr.state, result: rr.value };
-      }) as number;
-
-      const difficultyBoost =
-        settings.difficulty === "Casual"
-          ? 0.8
-          : settings.difficulty === "Chaos"
-            ? 1.35
-            : 1;
-
-      const eventEffect = applyEventEffects(state, cfg.id);
-      const sentimentDrift = state.marketSentiment * cfg.eventSensitivity * 0.001;
-      const momentumPart = c.momentum * 0.4;
-      const drift = cfg.trendBias + sentimentDrift + eventEffect;
-
-      const rawMove = clamp((drift + momentumPart + noise) * difficultyBoost, -0.05, 0.05);
-      c.price = Math.max(cfg.basePrice * 0.05, c.price * (1 + rawMove));
-      c.momentum = clamp(c.momentum * 0.8 + rawMove * 0.9, -0.08, 0.08);
-      c.history.push({ t: state.currentTime, price: c.price });
-
       const spreadPct = getSpreadPct(cfg, state.fear, state.greed);
       c.buyPrice = c.price * (1 + spreadPct / 2);
       c.sellPrice = c.price * (1 - spreadPct / 2);
 
       const ref = c.history[Math.max(0, c.history.length - 1440)];
       c.trend24h = ref ? (c.price - ref.price) / ref.price : 0;
-
-      moodNudge += rawMove;
     }
 
-    state.marketSentiment = clamp(state.marketSentiment * 0.97 + moodNudge * 0.2, -1, 1);
+    state.marketSentiment = clamp(
+      state.marketSentiment * (marketOpen ? 0.975 : 0.99) + moodNudge * 0.18,
+      -1,
+      1,
+    );
 
     resolveTips(state);
 
@@ -514,6 +488,22 @@ export function createTradePreview(
   side: "buy" | "sell",
   orderUsd: number,
 ): TradePreview {
+  if (!isMarketOpen(state.currentTime)) {
+    return {
+      side,
+      coinId,
+      orderUsd,
+      units: 0,
+      estimatedPrice: state.coins[coinId].price,
+      fee: 0,
+      spreadCost: 0,
+      slippagePct: 0,
+      total: orderUsd,
+      valid: false,
+      reason: "Market is closed. Orders resume at next session open.",
+    };
+  }
+
   const coin = state.coins[coinId];
   const cfg = coinConfig(coinId);
   const px = side === "buy" ? coin.buyPrice : coin.sellPrice;

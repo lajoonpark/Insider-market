@@ -18,8 +18,25 @@ const DEFAULT_SETTINGS: GameSettings = {
   tutorialSeen: false,
 };
 
+function hydrateState(saved: GameState | null) {
+  const fallback = initialGameState(7777);
+  if (!saved) return fallback;
+
+  const coins = Object.fromEntries(
+    COIN_CONFIGS.map((cfg) => [cfg.id, { ...fallback.coins[cfg.id], ...saved.coins?.[cfg.id] }]),
+  ) as GameState["coins"];
+
+  return {
+    ...fallback,
+    ...saved,
+    coins,
+    marketRegime: saved.marketRegime ?? fallback.marketRegime,
+    regimeMinutesRemaining: saved.regimeMinutesRemaining ?? fallback.regimeMinutesRemaining,
+  };
+}
+
 export function useGameEngine() {
-  const [state, setState] = useState<GameState>(() => loadGameState() ?? initialGameState(7777));
+  const [state, setState] = useState<GameState>(() => hydrateState(loadGameState()));
   const [settings, setSettings] = useState<GameSettings>(DEFAULT_SETTINGS);
   const { paused, timeSpeed } = state;
 
