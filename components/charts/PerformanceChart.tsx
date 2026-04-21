@@ -28,6 +28,10 @@ function downsample<T>(arr: T[], maxPoints: number): T[] {
   return arr.filter((_, i) => i % step === 0 || i === arr.length - 1);
 }
 
+const MINUTES_IN_1H = 60;
+const MINUTES_IN_6H = 360;
+const MINUTES_IN_24H = 1440;
+
 export function PerformanceChart({
   data,
   title,
@@ -43,7 +47,7 @@ export function PerformanceChart({
   const effectiveMode = compare ? "pct" : mode;
   const zoomedData = useMemo(() => {
     if (zoom === "ALL") return data;
-    const points = zoom === "1H" ? 60 : zoom === "6H" ? 360 : 1440;
+    const points = zoom === "1H" ? MINUTES_IN_1H : zoom === "6H" ? MINUTES_IN_6H : MINUTES_IN_24H;
     return data.slice(-points);
   }, [data, zoom]);
 
